@@ -51,6 +51,8 @@ class AnalogReader {
     byte   _pin {0};                  // AD Pin
     // Variables privée
   private:
+    void   _startTimer();
+    void   _stopTimer();
     bool   _active {false};
 
     bool   _ADValueChanged {false};    // Une nouvelle Valeur est presente dans l'objet

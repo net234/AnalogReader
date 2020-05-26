@@ -68,7 +68,7 @@ void loop() {
   static  int ticHigh = 255;
   static int ticMed = 128;
   static int V1 = 128;
-  if (MonLecteurAnalogique1->ADReady()) {
+  if (MonLecteurAnalogique1 && MonLecteurAnalogique1->ADReady()) {
     V1 = MonLecteurAnalogique1->getADValue();
     ticMed = ticLow + (ticHigh - ticLow) / 2;
     if (V1 <= ticMed) {
@@ -109,7 +109,7 @@ void loop() {
 
 
   }
-  if (MonLecteurAnalogique2->ADReady()) {
+  if (MonLecteurAnalogique2 && MonLecteurAnalogique2->ADReady()) {
     static int V2Old = -1;
     //   int V = MonLecteurAnalogique.getADValue() - 128;  Si l'entree est polarisee a VCC/2
     int V2 = MonLecteurAnalogique2->getADValue();
@@ -123,7 +123,7 @@ void loop() {
       Serial.println(M2);
     }
   }
-  if (MonLecteurAnalogique0->ADReady()) {
+  if (MonLecteurAnalogique0 && MonLecteurAnalogique0->ADReady()) {
     static int V0Old = -1;
     int V0 = MonLecteurAnalogique0->getADValue();
     int M0 = MonLecteurAnalogique0->getMissedADRead();
@@ -133,6 +133,46 @@ void loop() {
       Serial.print(V0);
       Serial.print(" M0:");
       Serial.println(M0);
+    }
+  }
+  if (Serial.available())   {
+    char inChar = (char)Serial.read();
+    switch (inChar) {
+      case '0':
+        if (MonLecteurAnalogique0 == NULL) {
+          Serial.println("New Lecteur0");
+          MonLecteurAnalogique0 = new AnalogReader(0);
+          MonLecteurAnalogique0->begin();
+
+        }  else {
+          Serial.println("delete Lecteur0");
+          delete  MonLecteurAnalogique0;
+          MonLecteurAnalogique0 = NULL;
+        }
+        break;
+      case '1':
+        if (MonLecteurAnalogique1 == NULL) {
+          Serial.println("New Lecteur1");
+          MonLecteurAnalogique1 = new AnalogReader(1);
+          MonLecteurAnalogique1->begin();
+        }  else {
+          Serial.println("delete Lecteur1");
+          delete  MonLecteurAnalogique1;
+          MonLecteurAnalogique1 = NULL;
+        }
+        break;
+      case '2':
+        if (MonLecteurAnalogique2 == NULL) {
+          Serial.println("New Lecteur2");
+          MonLecteurAnalogique2 = new AnalogReader(2);
+          MonLecteurAnalogique2->begin();
+        }  else {
+          Serial.println("delete Lecteur2");
+          delete  MonLecteurAnalogique2;
+          MonLecteurAnalogique2 = NULL;
+        }
+        break;
+
     }
   }
 

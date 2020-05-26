@@ -83,7 +83,7 @@ AnalogReader::AnalogReader(const byte pin) {
   //Serial.begin(115200);
   Sprint("Construct = ", (long)pin);
   Sprint("Valeur de __AnalogReaderFirst = ", (long)__AnalogReaderFirst);
-  delay(500);
+  _stopTimer();
   if (__AnalogReaderFirst == NULL) {
     __AnalogReaderFirst = this;
   } else {
@@ -97,20 +97,28 @@ AnalogReader::AnalogReader(const byte pin) {
     aPtr->next = this;
     Sprint("Valeur de aPtr finale = ", (long)aPtr);
   }
-
+  _startTimer();
   //  Sprint("Valeur de __AnalogReaderFirst = ",(long)__AnalogReaderFirst);
   //  Sprint("Valeur de __AnalogReaderFirst->next = ",(long)__AnalogReaderFirst->next);
   //
 }
 
 AnalogReader::~AnalogReader() {
-  AnalogReader* aPtr = (AnalogReader*)__AnalogReaderFirst;
-  while (aPtr != NULL && aPtr != this) {
-    aPtr = aPtr->next;
-  };
-  if (aPtr != NULL) {
-    aPtr = this->next;
-  };
+  _stopTimer();
+  if (__AnalogReaderFirst == this) {
+    __AnalogReaderFirst = this->next;
+  } else {
+    AnalogReader* aPtr = __AnalogReaderFirst;
+    while (aPtr != NULL && aPtr->next != this) {
+      aPtr = aPtr->next;
+    };
+    if (aPtr != NULL) {
+      aPtr->next = this->next;
+    };
+  }
+  if (__AnalogReaderFirst != NULL) {
+    _startTimer();
+  }
 }
 
 
@@ -120,14 +128,24 @@ void  AnalogReader::begin(const byte pin) {
   begin();
 }
 void  AnalogReader::begin() {
-  if (__AnalogReaderCurrent != NULL) {
-    end();
-  }
+  _active = true;
+   Serial.print("begin pin = ");
+  Serial.println(_pin);
+
+}
+
+void  AnalogReader::end() {
+  _active =false;
+}
+
+
+
+
+void AnalogReader::_startTimer() {
+  _stopTimer();  
 
   // Initialisation de l'ADC (Analog Digital Converter)
   // voir page 217 a 220 ATMega328 DataSheeet
-  Serial.print("begin pin = ");
-  Serial.println(_pin);
   ADMUX  = 0;
   ADCSRA = 0;
   ADCSRB = 0;
@@ -149,7 +167,7 @@ void  AnalogReader::begin() {
   ADCSRA |= (6 << ADPS0) ; //set ADC clock div 64 (1 a 7)
   ADCSRA |= (1 << ADEN);  //Active l'ADC
 
-  //Initialisation Timer1
+  //Initialisation Timer1 on ajuste la frequence en fonction du nombre d'element;
 
   AnalogReader* aPtr = (AnalogReader*)__AnalogReaderFirst;
   byte N = 0;
@@ -163,20 +181,19 @@ void  AnalogReader::begin() {
   Serial.print("Timer = ");
   Serial.println(1000000 / FrequenceTimer / N);
 
-  __AnalogReaderCurrent = NULL;
+  __AnalogReaderCurrent = NULL;  // il sera mis en place par le callback
   Timer1.initialize(1000000 / FrequenceTimer / N); // Timer reglé en microsecondes
   Timer1.attachInterrupt(__callback_AnalogReader);    // attaches __callback_AnalogReader() pour gerer l'interuption
-  __AnalogReaderCurrent = __AnalogReaderFirst;
 }
 
-void  AnalogReader::end() {
+void  AnalogReader::_stopTimer() {
+  Serial.println("Timer OFF ");
+  Timer1.stop();
+  Timer1.detachInterrupt();
   // Arret AD
   ADMUX  = 0;
   ADCSRA = 0;
   ADCSRB = 0;
-  // Arret Timer
-  Timer1.detachInterrupt();
-  Timer1.stop();
   __AnalogReaderCurrent = NULL;
 }
 
@@ -215,11 +232,12 @@ int AnalogReader::getMissedADRead() {
 
 // est appelee sous interuption
 void AnalogReader::putValue(const int aValue) {
-  __ADValue = (__ADValue * 9 + aValue) / 10 ;          // Avec un lissage a 10%
-  if ( __ADValueReady) {
-    __ADMissed++;            // Comptage des valeurs non lues
-  } else {
-    __ADValueReady = true;   // Signale a l'objet que la lecture a eut lieu
+  if (_active) {
+    __ADValue = (__ADValue * 9 + aValue) / 10 ;          // Avec un lissage a 10%
+    if ( __ADValueReady) {
+      __ADMissed++;            // Comptage des valeurs non lues
+    } else {
+      __ADValueReady = true;   // Signale a l'objet que la lecture a eut lieu
+    }
   }
-
 }
