@@ -31,7 +31,7 @@
 // la frequence d'interuption  permet de lire regulierement l'AD
 // elle ne doit pas etre superieur a 10.000Hz sinon le convertisseur AD
 // ne sera pas pret a fournir la nouvelle valeur.
-const int  FrequenceTimer = 10;  //  frequence d'interuption en Hz
+const int  FrequenceTimer = 100;  //  frequence d'interuption en Hz
 
 class AnalogReader {
   public:
@@ -48,10 +48,11 @@ class AnalogReader {
     int    getMissedADRead(); // Nombre de lecture non recupérée
     void   putValue(const int aValue);
     AnalogReader* next{NULL};
+    byte   _pin {0};                  // AD Pin
     // Variables privée
   private:
     bool   _active {false};
-    byte   _pin {A0};                  // AD Pin
+
     bool   _ADValueChanged {false};    // Une nouvelle Valeur est presente dans l'objet
     short  _ADValue {0};               // Valeur lue sur le convertisseur
     short  _MissedADRead{0};           // nombre de valeur non lue depuis le dernier getValue()
