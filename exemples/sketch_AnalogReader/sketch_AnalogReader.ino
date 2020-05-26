@@ -19,29 +19,33 @@
  **   V1.1 P.HENRY  06/03/2020
  **    Choix de l'entree ADC0 ... ADC7
  **    Meilleur documentation de l'initialisation ADC
+ **   V1.2 P.HENRY  25/05/2020
+ **    Multi instances (A0..A7)
+ **
  *************************************************
  *************************************************/
 #include  "Arduino.h"
 #include  "AnalogReader.h"
 
-#define APP_NAME  "AnalogReader V1.1"
+#define APP_NAME  "AnalogReader V1.2"
 
 
-// Objet d'interface pour le convetisseur AD
-AnalogReader MonLecteurAnalogique;
+// Objets d'interface pour le convetisseur AD
+AnalogReader MonLecteurAnalogique1(1);
 
 
 
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.println(APP_NAME);
+  
   //  Serial.println(ADC1);
   delay(2000);
-
+  //pinMode(A0, INPUT); 
   // Choix de l'entree ADC
-  MonLecteurAnalogique.begin(1);
+  MonLecteurAnalogique1.begin();
 
 
   Serial.println("Bonjour");
@@ -51,15 +55,18 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
 
-  if (MonLecteurAnalogique.ADReady()) {
+ // if (MonLecteurAnalogique1.ADReady()) {
+    static int V1Old = -1; 
  //   int V = MonLecteurAnalogique.getADValue() - 128;  Si l'entree est polarisee a VCC/2
-    int V = MonLecteurAnalogique.getADValue();
-    int M = MonLecteurAnalogique.getMissedADRead();
-    if ((abs(V) > 5)  ) { // si V > 0,1V
-      Serial.print("V:");
-      Serial.print(V);
-      Serial.print(" M:");
-      Serial.println(M);
-    }
+    int V1 = MonLecteurAnalogique1.getADValue();
+ //     int V1 = analogRead(A1);
+    int M1 = MonLecteurAnalogique1.getMissedADRead();
+    if (V1 != V1Old)  { // si V > 0,1V
+      V1Old = V1;
+      Serial.print("V1:");
+      Serial.print(V1);
+      Serial.print(" M1:");
+      Serial.println(M1);
+ //   }
   }
 }
