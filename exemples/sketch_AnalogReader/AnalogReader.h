@@ -31,7 +31,7 @@
 // la frequence d'interuption  permet de lire regulierement l'AD
 // elle ne doit pas etre superieur a 10.000Hz sinon le convertisseur AD
 // ne sera pas pret a fournir la nouvelle valeur.
-const int  FrequenceTimer = 50;  //  frequence d'interuption en Hz
+const int  FrequenceTimer = 10;  //  frequence d'interuption en Hz
 
 class AnalogReader {
   public:

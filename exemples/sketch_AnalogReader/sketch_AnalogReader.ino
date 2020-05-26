@@ -55,10 +55,22 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   static  bool tictac = false;
+  static  int ticLow = 0;
+  static  int ticHigh = 255;
+  static int ticMed = 128;
+  static int V1 = 128;
   if (MonLecteurAnalogique1.ADReady()) {
+    V1 = MonLecteurAnalogique1.getADValue();
+    ticMed = ticLow + (ticHigh - ticLow) / 2;
+    if (V1 <= ticMed) {
+      ticLow = min(ticLow,V1);
+      if (ticHigh > ticMed) ticHigh --;
+    } else {
+      ticHigh = max(ticHigh,V1);
 
-    int V1 = MonLecteurAnalogique1.getADValue();
-    if ( tictac != (V1 > 20) ) {
+      if (ticLow < ticMed) ticLow ++;
+    }
+    if ( tictac != (V1 > ticMed) ) {
       tictac = !tictac;
       if (tictac) {
         Serial.print(F("->Tac"));
@@ -72,6 +84,21 @@ void loop() {
         Serial.println();
       }
     }
+  }
+  static long T1 = 0;
+  if (T1++ > 10000000) {
+    T1 = 0;
+    Serial.print("V1:");
+    Serial.print(V1);
+
+    Serial.print(" Low:");
+    Serial.print(ticLow);
+    Serial.print(" Highr:");
+    Serial.print(ticHigh);
+    Serial.print(" Med:");
+    Serial.println(ticMed);
+
+
   }
   //  if (MonLecteurAnalogique1.ADReady()) {
   //    static int V1Old = -1;
