@@ -40,10 +40,10 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
   Serial.println(APP_NAME);
-  
+
   //  Serial.println(ADC1);
   delay(2000);
-  //pinMode(A0, INPUT); 
+  //pinMode(A0, INPUT);
   // Choix de l'entree ADC
   MonLecteurAnalogique1.begin();
 
@@ -54,19 +54,38 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
+  static  bool tictac = false;
+  if (MonLecteurAnalogique1.ADReady()) {
 
- // if (MonLecteurAnalogique1.ADReady()) {
-    static int V1Old = -1; 
- //   int V = MonLecteurAnalogique.getADValue() - 128;  Si l'entree est polarisee a VCC/2
     int V1 = MonLecteurAnalogique1.getADValue();
- //     int V1 = analogRead(A1);
-    int M1 = MonLecteurAnalogique1.getMissedADRead();
-    if (V1 != V1Old)  { // si V > 0,1V
-      V1Old = V1;
-      Serial.print("V1:");
-      Serial.print(V1);
-      Serial.print(" M1:");
-      Serial.println(M1);
- //   }
+    if ( tictac != (V1 > 20) ) {
+      tictac = !tictac;
+      if (tictac) {
+        Serial.print(F("->Tac"));
+        Serial.print(" V1:");
+        Serial.print(V1);
+        int M1 = MonLecteurAnalogique1.getMissedADRead();
+        if (M1)  { // si V > 0,1V
+          Serial.print(" M1:");
+          Serial.print(M1);
+        }
+        Serial.println();
+      }
+    }
   }
+  //  if (MonLecteurAnalogique1.ADReady()) {
+  //    static int V1Old = -1;
+  //    //   int V = MonLecteurAnalogique.getADValue() - 128;  Si l'entree est polarisee a VCC/2
+  //    int V1 = MonLecteurAnalogique1.getADValue();
+  //    //     int V1 = analogRead(A1);
+  //    int M1 = MonLecteurAnalogique1.getMissedADRead();
+  //    if (V1 != V1Old)  { // si V > 0,1V
+  //      V1Old = V1;
+  //      Serial.print("V1:");
+  //      Serial.print(V1);
+  //      Serial.print(" M1:");
+  //      Serial.println(M1);
+  //    }
+  //  }
+
 }
