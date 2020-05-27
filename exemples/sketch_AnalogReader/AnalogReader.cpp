@@ -74,11 +74,16 @@ void __callback_AnalogReader(void) {
 
 
 // constructor
-AnalogReader::AnalogReader(const byte pin) {
+AnalogReader::AnalogReader(const byte pin, const byte lissage) {
   _pin = pin;
+  if (lissage > 0 && lissage <= 100) {
+    _lissage = lissage;
+  } else {
+    _lissage = 1;
+  }
   _active = false;
-  _ADValueChanged = false;
-  _ADValue = 0;
+  _valueChanged = false;
+  _value = 0;
   next = NULL;
   //Serial.begin(115200);
   Sprint("Construct = ", (long)pin);
@@ -123,26 +128,27 @@ AnalogReader::~AnalogReader() {
 
 
 // Le numero de la pin est 0 a 7 (ADC0 a ADC7)
-void  AnalogReader::begin(const byte pin) {
-  _pin = pin;
-  begin();
-}
-void  AnalogReader::begin() {
+void  AnalogReader::begin(const int pin, const int lissage) {
+  if ( pin >= 0) {
+    _pin = pin;
+  }
+  if ( lissage >= 0 ) {
+    _lissage = lissage;
+  }
   _active = true;
-   Serial.print("begin pin = ");
+  Serial.print("begin pin = ");
   Serial.println(_pin);
-
 }
 
 void  AnalogReader::end() {
-  _active =false;
+  _active = false;
 }
 
 
 
 
 void AnalogReader::_startTimer() {
-  _stopTimer();  
+  _stopTimer();
 
   // Initialisation de l'ADC (Analog Digital Converter)
   // voir page 217 a 220 ATMega328 DataSheeet
@@ -198,46 +204,52 @@ void  AnalogReader::_stopTimer() {
 }
 
 
-bool  AnalogReader::ADReady() {
+bool  AnalogReader::ready() {
   // On a deja une valeur non lue dans l'objet
-  if (_ADValueChanged) {
-    return (true);
+  if (!_valueChanged) {
+    // On regarde si une valeur a ete lue par l'AD
+    noInterrupts();
+    if (__ADNewValue) {
+      _value = __ADValue;
+      __ADNewValue = false;
+      _valueChanged = true;
+      _missedRead += __ADMissed;
+      __ADMissed = 0;
+    }
+    interrupts();
   }
-  // On regarde si une valeur a ete lue par l'AD
-  noInterrupts();
-  if (__ADValueReady) {
-    _ADValue = __ADValue;
-    __ADValueReady = false;
-    _ADValueChanged = true;
-    _MissedADRead += __ADMissed;
-    __ADMissed = 0;
-  }
-  interrupts();
-  return (_ADValueChanged);
+  return (_valueChanged);
 }
 
-int AnalogReader::getADValue() {
-  while (not ADReady()) {
-    delay(1);
+short AnalogReader::read() {
+  if ( !ready()) {
+    return (-1);
   };
-  _ADValueChanged = false;
-  return (_ADValue);
+  _valueChanged = false;
+  return (_value);
 }
 
-int AnalogReader::getMissedADRead() {
-  int result = _MissedADRead;
-  _MissedADRead = 0;
+short AnalogReader::getMissedRead() {
+  short result = _missedRead;
+  _missedRead = 0;
   return (result);
 }
 
 // est appelee sous interuption
-void AnalogReader::putValue(const int aValue) {
+void volatile AnalogReader::putValue(int aValue) {
   if (_active) {
-    __ADValue = (__ADValue * 9 + aValue) / 10 ;          // Avec un lissage a 10%
-    if ( __ADValueReady) {
-      __ADMissed++;            // Comptage des valeurs non lues
-    } else {
-      __ADValueReady = true;   // Signale a l'objet que la lecture a eut lieu
+    if ( _lissage > 1) {
+      aValue = (aValue + __ADValue * (_lissage - 1) ) / _lissage;        // Avec un lissage
+    }
+    if (__ADValue != aValue) {
+      __ADValue = aValue;
+      if ( __ADValue != _value) {
+        if ( __ADNewValue) {
+          __ADMissed++;            // Comptage des valeurs non lues
+        } else {
+          __ADNewValue = true;   // Signale a l'objet que la lecture a eut lieu
+        }
+      }
     }
   }
 }

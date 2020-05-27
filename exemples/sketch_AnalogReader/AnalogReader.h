@@ -36,17 +36,17 @@ const int  FrequenceTimer = 100;  //  frequence d'interuption en Hz
 class AnalogReader {
   public:
     // Constructeur
-    AnalogReader(const byte pin = 0);
+    AnalogReader(const byte pin = 0, const byte lissage = 1);
     ~AnalogReader();
     //}
     // Methodes public
-    void   begin(const byte pin);         // Activation de la lecture cyclique sur la ADC (0..7)
-    void   begin();                       // Activation de la lecture cyclique
+    void   begin(const int pin = -1, const int lissage = -1);        // Activation de la lecture cyclique sur la ADC (0..7)
+    //    void   begin();                       // Activation de la lecture cyclique
     void   end();           // Arret de la lecure cyclique
-    bool   ADReady();    // Une lecture prete ?
-    int    getADValue();      // Recuperation de la valeur lue
-    int    getMissedADRead(); // Nombre de lecture non recupérée
-    void   putValue(const int aValue);
+    bool   ready();    // Une lecture prete ?
+    short  read();      // Recuperation de la valeur lue
+    short    getMissedRead(); // Nombre de lecture non recupérée
+    volatile void   putValue(const int aValue);
     AnalogReader* next{NULL};
     byte   _pin {0};                  // AD Pin
     // Variables privée
@@ -54,14 +54,16 @@ class AnalogReader {
     void   _startTimer();
     void   _stopTimer();
     bool   _active {false};
-
-    bool   _ADValueChanged {false};    // Une nouvelle Valeur est presente dans l'objet
-    short  _ADValue {0};               // Valeur lue sur le convertisseur
-    short  _MissedADRead{0};           // nombre de valeur non lue depuis le dernier getValue()
+    byte   _lissage {1};
+    bool   _valueChanged {false};    // Une nouvelle Valeur est presente dans l'objet
+    short  _value {0};               // Valeur lue sur le convertisseur
+    short  _missedRead{0};           // nombre de valeur non lue depuis le dernier getValue()
     // valeur sous interuption
-    volatile short __ADValue = 0;             // Valeur lue
-    volatile bool  __ADValueReady = false;    // Presence d'une Nouvelle valeur
-    volatile short __ADMissed = 0;            // Nombre de valaur non recuperée
+    volatile short __ADValue {0};             // Valeur lue
+    volatile bool  __ADNewValue {
+      false
+    };    // Presence d'une Nouvelle valeur
+    volatile short __ADMissed = {0};            // Nombre de valaur non recuperée
 
 };
 

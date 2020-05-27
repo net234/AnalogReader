@@ -46,7 +46,7 @@ void setup() {
   //  Serial.println(ADC1);
   //pinMode(A0, INPUT);
   // Choix de l'entree ADC
-  MonLecteurAnalogique0 = new AnalogReader(0);
+  MonLecteurAnalogique0 = new AnalogReader(0,3);
   MonLecteurAnalogique1 = new AnalogReader(1);
   MonLecteurAnalogique2 = new AnalogReader(2);
 
@@ -68,8 +68,8 @@ void loop() {
   static  int ticHigh = 255;
   static int ticMed = 128;
   static int V1 = 128;
-  if (MonLecteurAnalogique1 && MonLecteurAnalogique1->ADReady()) {
-    V1 = MonLecteurAnalogique1->getADValue();
+  if (MonLecteurAnalogique1 && MonLecteurAnalogique1->ready()) {
+    V1 = MonLecteurAnalogique1->read();
     ticMed = ticLow + (ticHigh - ticLow) / 2;
     if (V1 <= ticMed) {
       ticLow = min(ticLow, V1);
@@ -85,7 +85,7 @@ void loop() {
         Serial.print(F("->Tac"));
         Serial.print(" V1:");
         Serial.print(V1);
-        int M1 = MonLecteurAnalogique1->getMissedADRead();
+        int M1 = MonLecteurAnalogique1->getMissedRead();
         if (M1)  { // si V > 0,1V
           Serial.print(" M1:");
           Serial.print(M1);
@@ -109,12 +109,11 @@ void loop() {
 
 
   }
-  if (MonLecteurAnalogique2 && MonLecteurAnalogique2->ADReady()) {
+  if (MonLecteurAnalogique2 && MonLecteurAnalogique2->ready()) {
     static int V2Old = -1;
-    //   int V = MonLecteurAnalogique.getADValue() - 128;  Si l'entree est polarisee a VCC/2
-    int V2 = MonLecteurAnalogique2->getADValue();
+    int V2 = MonLecteurAnalogique2->read();
     //     int V1 = analogRead(A2);
-    int M2 = MonLecteurAnalogique2->getMissedADRead();
+    int M2 = MonLecteurAnalogique2->getMissedRead();
     if (V2 != V2Old)  { // si V > 0,1V
       V2Old = V2;
       Serial.print("V2:");
@@ -123,10 +122,10 @@ void loop() {
       Serial.println(M2);
     }
   }
-  if (MonLecteurAnalogique0 && MonLecteurAnalogique0->ADReady()) {
+  if (MonLecteurAnalogique0 && MonLecteurAnalogique0->ready()) {
     static int V0Old = -1;
-    int V0 = MonLecteurAnalogique0->getADValue();
-    int M0 = MonLecteurAnalogique0->getMissedADRead();
+    int V0 = MonLecteurAnalogique0->read();
+    int M0 = MonLecteurAnalogique0->getMissedRead();
     if (V0 != V0Old)  { // si V > 0,1V
       V0Old = V0;
       Serial.print("V0:");
@@ -141,7 +140,7 @@ void loop() {
       case '0':
         if (MonLecteurAnalogique0 == NULL) {
           Serial.println("New Lecteur0");
-          MonLecteurAnalogique0 = new AnalogReader(0);
+          MonLecteurAnalogique0 = new AnalogReader(0,3);
           MonLecteurAnalogique0->begin();
 
         }  else {
