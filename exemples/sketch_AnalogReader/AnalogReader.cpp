@@ -1,7 +1,7 @@
 /*************************************************
  *************************************************
  **  AnalogReader.cpp  Objet d'interface pour lecture analogique
- **   Pierre HENRY  05/03/2020
+ **   Pierre HENRY  27/05/2020
  **
  **   Lecture sous interuption en "vol de cycle"
  **   Utilisation du timer1 a 1000Hz pour lire puis relancer le
@@ -15,39 +15,41 @@
  **
  **
  **   V1.0 P.HENRY  05/03/2020
- **   From scratch with arduino.cc totorial :)
-      V1.1 P.HENRY  06/03/2020
-      Choix de l'entree ADC0 ... ADC7
-      Meilleur documentation de l'initialisation ADC
+ **    From scratch with arduino.cc totorial :)
+ **   V1.1 P.HENRY  06/03/2020
+ **    Choix de l'entree ADC0 ... ADC7
+ **    Meilleur documentation de l'initialisation ADC
  **   V1.2 P.HENRY  25/05/2020
  **    Multi instances (A0..A7)
+ **   V1.2.1 P.HENRY 27/05/2020
+ **    Ajout de PulseReader en derivé d'AnalogReader
  *************************************************
  *************************************************/
 #include  "AnalogReader.h"
 
 
-//char Sprint1H( byte aByte) {
-//  aByte &= 0xF;
-//  Serial.print((char)aByte + (aByte <= 9 ? '0' : 'A' -  10));
-//}
-//char Sprint2H( byte aByte) {
-//  Sprint1H(aByte >> 4);
-//  Sprint1H(aByte);
-//}
-//char Sprint4H( word aWord) {
-//  Sprint2H(aWord >> 8);
-//  Sprint2H(aWord);
-//}
-//
-//void  SprintH(String string, long aValue) {
-//  Serial.print(string);
-//  Sprint4H(aValue);
-//  Serial.println();
-//}
-//void  Sprint(String string, long aValue) {
-//  Serial.print(string);
-//  Serial.println(aValue);
-//}
+char Sprint1H( byte aByte) {
+  aByte &= 0xF;
+  Serial.print((char)aByte + (aByte <= 9 ? '0' : 'A' -  10));
+}
+char Sprint2H( byte aByte) {
+  Sprint1H(aByte >> 4);
+  Sprint1H(aByte);
+}
+char Sprint4H( word aWord) {
+  Sprint2H(aWord >> 8);
+  Sprint2H(aWord);
+}
+
+void  SprintH(String string, long aValue) {
+  Serial.print(string);
+  Sprint4H(aValue);
+  Serial.println();
+}
+void  Sprint(String string, long aValue) {
+  Serial.print(string);
+  Serial.println(aValue);
+}
 
 
 
@@ -89,7 +91,7 @@ AnalogReader::AnalogReader(const byte pin, const byte lissage) {
   _value = 0;
   _next = NULL;
 
-  //  Sprint("Construct = ", (long)pin);
+  Sprint("Construct AnalogReader = ", (long)_pin);
   //  Sprint("Valeur de __AnalogReaderFirst = ", (long)__AnalogReaderFirst);
   _stopTimer();
   if (__AnalogReaderFirst == NULL) {
@@ -201,7 +203,7 @@ void  AnalogReader::_stopTimer() {
   __AnalogReaderCurrent = NULL;
 }
 
-
+// virtual
 bool  AnalogReader::ready() {
   // On a deja une valeur non lue dans l'objet
   if (!_valueChanged) {
@@ -241,14 +243,15 @@ bool AnalogReader::setFrequence(const long frequence) {
 
 
 // est appelee sous interuption
-void AnalogReader::_putValue(int aValue) {
+// virtual
+void AnalogReader::_putValue(int avalue) {
   if (_active) {
     if ( _lissage > 1) {
-      aValue = (aValue + __ADValue * (_lissage - 1) ) / _lissage;        // Avec un lissage
+      avalue = (avalue + __ADValue * (_lissage - 1) ) / _lissage;        // Avec un lissage
     }
     // Si la valeur est differente de la precedente
-    if (__ADValue != aValue) {
-      __ADValue = aValue;
+    if (__ADValue != avalue) {
+      __ADValue = avalue;
       // Si la valeur precedente n'a pas ete lue par l'utilisateur
       if ( __ADNewValue) {
         __ADMissed++;            // Comptage des valeurs non lues
@@ -257,4 +260,85 @@ void AnalogReader::_putValue(int aValue) {
       }
     }
   }
+}
+
+/***********************************************************************
+   Pulse Reader
+*/
+void   PulseReader::begin(const int pin = -1, const int highlevel = -1, const int lowlevel = -1) {
+  if (highlevel > 0)  _highLevel = highlevel;
+  if (lowlevel  > 0)  _lowLevel = lowlevel;
+  AnalogReader::begin(pin);
+
+}
+
+
+// virtual
+bool  PulseReader::ready() {
+  // On a deja une valeur non lue dans l'objet
+  if (!_valueChanged) {
+    // On regarde si une valeur a ete lue par l'AD
+    noInterrupts();
+    if (__ADNewValue) {
+      _value = __ADValue;
+      _pulseLength = __pulseLength;
+      _pulseInterval = __pulseInterval;
+      __ADNewValue = false;
+      _valueChanged = true;
+      _missedRead += __ADMissed;
+      __ADMissed = 0;
+    }
+    interrupts();
+  }
+  return (_valueChanged);
+}
+
+int PulseReader::getLength() {
+  return ((1000L * _pulseLength) / __frequenceTimer);
+}
+
+int PulseReader::getBPM() {
+  return ((60L * __frequenceTimer) / _pulseInterval);
+}
+
+
+
+void   PulseReader::_putValue(const int avalue) {
+
+
+  __pulseIntervalCompteur++;
+
+  //Attente du pulse
+  if ( !__pulseStarted) {
+    if (avalue >= _highLevel) {
+      // detection du depart du pulse
+      // initialisation mode debut de pulse
+      __pulseStarted = true;
+      __pulseIntervalLatch = __pulseIntervalCompteur;
+      __pulseIntervalCompteur = 0;
+      __pulseLengthCompteur = 0;
+      __pulseMaxLevel = avalue;
+    }
+    return;
+  }
+
+  //Mesure de la longeur du pulse
+  __pulseLengthCompteur++;
+  //Track du max level
+  if (avalue > __pulseMaxLevel) __pulseMaxLevel = avalue;
+
+  // detection de la fin du pulse
+  if (avalue <= _lowLevel) {
+    // fin de pulse on passe les info a l'objet
+    __pulseStarted = false;
+    if (__ADNewValue) {
+      // houla il y a un pulse non lut par le stetch !!
+      __ADMissed++;
+    }
+    __ADValue = __pulseMaxLevel;
+    __pulseLength = __pulseLengthCompteur;
+    __pulseInterval = __pulseIntervalLatch;
+    __ADNewValue = true;
+  }
+  return;
 }
