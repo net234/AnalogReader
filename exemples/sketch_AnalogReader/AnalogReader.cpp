@@ -26,28 +26,28 @@
 #include  "AnalogReader.h"
 
 
-char Sprint1H( byte aByte) {
-  aByte &= 0xF;
-  Serial.print((char)aByte + (aByte <= 9 ? '0' : 'A' -  10));
-}
-char Sprint2H( byte aByte) {
-  Sprint1H(aByte >> 4);
-  Sprint1H(aByte);
-}
-char Sprint4H( word aWord) {
-  Sprint2H(aWord >> 8);
-  Sprint2H(aWord);
-}
-
-void  SprintH(String string, long aValue) {
-  Serial.print(string);
-  Sprint4H(aValue);
-  Serial.println();
-}
-void  Sprint(String string, long aValue) {
-  Serial.print(string);
-  Serial.println(aValue);
-}
+//char Sprint1H( byte aByte) {
+//  aByte &= 0xF;
+//  Serial.print((char)aByte + (aByte <= 9 ? '0' : 'A' -  10));
+//}
+//char Sprint2H( byte aByte) {
+//  Sprint1H(aByte >> 4);
+//  Sprint1H(aByte);
+//}
+//char Sprint4H( word aWord) {
+//  Sprint2H(aWord >> 8);
+//  Sprint2H(aWord);
+//}
+//
+//void  SprintH(String string, long aValue) {
+//  Serial.print(string);
+//  Sprint4H(aValue);
+//  Serial.println();
+//}
+//void  Sprint(String string, long aValue) {
+//  Serial.print(string);
+//  Serial.println(aValue);
+//}
 
 
 
@@ -85,27 +85,22 @@ AnalogReader::AnalogReader(const byte pin, const byte lissage) {
   _valueChanged = false;
   _value = 0;
   next = NULL;
-  //Serial.begin(115200);
-  Sprint("Construct = ", (long)pin);
-  Sprint("Valeur de __AnalogReaderFirst = ", (long)__AnalogReaderFirst);
+
+//  Sprint("Construct = ", (long)pin);
+//  Sprint("Valeur de __AnalogReaderFirst = ", (long)__AnalogReaderFirst);
   _stopTimer();
   if (__AnalogReaderFirst == NULL) {
     __AnalogReaderFirst = this;
   } else {
     AnalogReader* aPtr = __AnalogReaderFirst;
-    Sprint("Valeur de aPtr = ", (long)aPtr);
-    delay(500);
     while ( aPtr->next != NULL) {
       aPtr = aPtr->next;
-      Sprint("Valeur de aPtr = ", (long)aPtr);
+//      Sprint("Valeur de aPtr = ", (long)aPtr);
     };
     aPtr->next = this;
-    Sprint("Valeur de aPtr finale = ", (long)aPtr);
+//    Sprint("Valeur de aPtr finale = ", (long)aPtr);
   }
   _startTimer();
-  //  Sprint("Valeur de __AnalogReaderFirst = ",(long)__AnalogReaderFirst);
-  //  Sprint("Valeur de __AnalogReaderFirst->next = ",(long)__AnalogReaderFirst->next);
-  //
 }
 
 AnalogReader::~AnalogReader() {
@@ -136,8 +131,8 @@ void  AnalogReader::begin(const int pin, const int lissage) {
     _lissage = lissage;
   }
   _active = true;
-  Serial.print("begin pin = ");
-  Serial.println(_pin);
+//  Serial.print("begin pin = ");
+//  Serial.println(_pin);
 }
 
 void  AnalogReader::end() {
@@ -182,10 +177,10 @@ void AnalogReader::_startTimer() {
     N++;
   }
 
-  Serial.print("Nbr reader = ");
-  Serial.println(N);
-  Serial.print("Timer = ");
-  Serial.println(1000000 / FrequenceTimer / N);
+//  Serial.print("Nbr reader = ");
+//  Serial.println(N);
+//  Serial.print("Timer = ");
+//  Serial.println(1000000 / FrequenceTimer / N);
 
   __AnalogReaderCurrent = NULL;  // il sera mis en place par le callback
   Timer1.initialize(1000000 / FrequenceTimer / N); // Timer reglé en microsecondes
@@ -193,7 +188,7 @@ void AnalogReader::_startTimer() {
 }
 
 void  AnalogReader::_stopTimer() {
-  Serial.println("Timer OFF ");
+//  Serial.println("Timer OFF ");
   Timer1.stop();
   Timer1.detachInterrupt();
   // Arret AD
