@@ -10,7 +10,7 @@
  **   Merci a :
  **     Stephan Maugars pour la maquette de depart
  **     amandaghassaei  pour le tuto AD
- **
+ ** 
  **
  **
  **
@@ -44,10 +44,7 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
   Serial.println(APP_NAME);
-  Serial.print("sizeof(word)=");
-  Serial.println(sizeof(word));
-  //  Serial.println(ADC1);
-  //pinMode(A0, INPUT);
+   
   // Choix de l'entree ADC
   MonLecteurAnalogique0 = new AnalogReader(2, 1);
   MonLecteurAnalogique1 = new AnalogReader(1, 5);
