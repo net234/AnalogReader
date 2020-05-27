@@ -1,6 +1,6 @@
 /*************************************************
  *************************************************
- **  sketch AnalogReader V1.1 Exemple d'utilisation de la mini lib Analogue pour lecture analogique
+ **  sketch AnalogReader V1.2.1 Test de developpement de la lin AnalogReader
  **   Pierre HENRY  05/03/2020
  **
  **   Lecture sous interuption pour ne pas attendre le temps de conversion
@@ -21,13 +21,15 @@
  **    Meilleur documentation de l'initialisation ADC
  **   V1.2 P.HENRY  25/05/2020
  **    Multi instances (A0..A7)
+      V1.2.1 P.HENRY 27/05/2020
+       Ajout de PulseReader en derivé d'AnalogReader
  **
  *************************************************
  *************************************************/
 #include  "Arduino.h"
 #include  "AnalogReader.h"
 
-#define APP_NAME  "AnalogReader V1.2"
+#define APP_NAME  "AnalogReader V1.2.1"
 
 
 // Objets d'interface pour le convetisseur AD
@@ -70,8 +72,8 @@ void loop() {
   static int V1 = 128;
   if (MonLecteurAnalogique1 && MonLecteurAnalogique1->ready()) {
     V1 = MonLecteurAnalogique1->read();
- //   Serial.print("V1:");
- //   Serial.println(V1);
+    //   Serial.print("V1:");
+    //   Serial.println(V1);
     ticMed = ticLow + (ticHigh - ticLow) / 2;
     if (V1 <= ticMed) {
       ticLow = min(ticLow, V1);
@@ -165,6 +167,23 @@ void loop() {
           MonLecteurAnalogique2 = NULL;
         }
         break;
+      case 'F':
+
+        if (MonLecteurAnalogique0) {
+          Serial.println("Frequence 1000HZ");
+          MonLecteurAnalogique0->setFrequence(1000);
+
+        }
+
+        break;
+      case 'G':
+        if (MonLecteurAnalogique0) {
+          Serial.println("Frequence 50HZ");
+          MonLecteurAnalogique0->setFrequence(50);
+
+        }
+        break;
+
 
     }
   }

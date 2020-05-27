@@ -6,15 +6,16 @@
 # Datatypes (KEYWORD1)
 #######################################
 
-WiFiManager	KEYWORD1
+PulseReader KEYWORD1
 AnalogReader KEYWORD1
 
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
-#	KEYWORD2
-
+getMissedRead	KEYWORD2
+setFrequence	KEYWORD2
+	
 #######################################
 # Constants (LITERAL1)
 #######################################
