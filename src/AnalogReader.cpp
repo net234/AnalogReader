@@ -28,30 +28,6 @@
 #include  "AnalogReader.h"
 
 
-char Sprint1H( byte aByte) {
-  aByte &= 0xF;
-  Serial.print((char)aByte + (aByte <= 9 ? '0' : 'A' -  10));
-}
-char Sprint2H( byte aByte) {
-  Sprint1H(aByte >> 4);
-  Sprint1H(aByte);
-}
-char Sprint4H( word aWord) {
-  Sprint2H(aWord >> 8);
-  Sprint2H(aWord);
-}
-
-void  SprintH(String string, long aValue) {
-  Serial.print(string);
-  Sprint4H(aValue);
-  Serial.println();
-}
-void  Sprint(String string, long aValue) {
-  Serial.print(string);
-  Serial.println(aValue);
-}
-
-
 
 //====== Variable globale volatile static ?
 AnalogReader* __AnalogReaderFirst   = NULL;            // First instance
@@ -91,8 +67,6 @@ AnalogReader::AnalogReader(const byte pin, const byte lissage) {
   _value = 0;
   _next = NULL;
 
-  Sprint("Construct AnalogReader = ", (long)_pin);
-  //  Sprint("Valeur de __AnalogReaderFirst = ", (long)__AnalogReaderFirst);
   _stopTimer();
   if (__AnalogReaderFirst == NULL) {
     __AnalogReaderFirst = this;
@@ -103,7 +77,6 @@ AnalogReader::AnalogReader(const byte pin, const byte lissage) {
       aPtr = aPtr->_next;
     };
     aPtr->_next = this;
-    //    Sprint("Valeur de aPtr finale = ", (long)aPtr);
   }
   _startTimer();
 }
@@ -136,8 +109,6 @@ void  AnalogReader::begin(const int pin, const int lissage) {
     _lissage = lissage;
   }
   _active = true;
-  //  Serial.print("begin pin = ");
-  //  Serial.println(_pin);
 }
 
 void  AnalogReader::end() {
@@ -182,18 +153,12 @@ void AnalogReader::_startTimer() {
     N++;
   }
 
-  Serial.print("Nbr reader = ");
-  Serial.println(N);
-  Serial.print("Timer = ");
-  Serial.println(1000000 / __frequenceTimer / N);
-
   __AnalogReaderCurrent = NULL;  // il sera mis en place par le callback
   Timer1.initialize(1000000 / __frequenceTimer / N); // Timer reglé en microsecondes
   Timer1.attachInterrupt(__callback_AnalogReader);    // attaches __callback_AnalogReader() pour gerer l'interuption
 }
 
 void  AnalogReader::_stopTimer() {
-  //  Serial.println("Timer OFF ");
   Timer1.stop();
   Timer1.detachInterrupt();
   // Arret AD
