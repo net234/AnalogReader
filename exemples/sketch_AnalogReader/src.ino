@@ -10,7 +10,7 @@
  **   Merci a :
  **     Stephan Maugars pour la maquette de depart
  **     amandaghassaei  pour le tuto AD
- ** 
+ **
  **
  **
  **
@@ -44,9 +44,9 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
   Serial.println(APP_NAME);
-   
+
   // Choix de l'entree ADC
-  MonLecteurAnalogique0 = new AnalogReader(2, 1);
+  MonLecteurAnalogique0 = new AnalogReader(0, 3);
   MonLecteurAnalogique1 = new AnalogReader(1, 5);
   //MonLecteurAnalogique2 = new AnalogReader(2);
 
@@ -96,12 +96,24 @@ void loop() {
       }
     }
   }
-  static long T1 = 0;
-  if (T1++ > 1000000) {
-    T1 = 0;
-    Serial.print("V1:");
-    Serial.print(V1);
-
+  static long T1 = millis();
+  if (millis() - T1 > 5000) {
+    T1 += 5000;
+    if (MonLecteurAnalogique0) {
+      int V0 = MonLecteurAnalogique0->getADValue();
+      Serial.print(" V0:");
+      Serial.print(V0);
+    };
+    if (MonLecteurAnalogique1) {
+      int V1 = MonLecteurAnalogique1->getADValue();
+      Serial.print(" V1:");
+      Serial.print(V1);
+    };
+    if (MonLecteurPulse2) {
+      int V2 = MonLecteurPulse2->getADValue();
+      Serial.print(" V2:");
+      Serial.print(V2);
+    };
     Serial.print(" Low:");
     Serial.print(ticLow);
     Serial.print(" Highr:");
@@ -123,8 +135,8 @@ void loop() {
     Serial.print(" BPM=");
     Serial.print(B2);
     if (M2) {
-    Serial.print(" M2:");
-    Serial.print(M2);
+      Serial.print(" M2:");
+      Serial.print(M2);
     }
     Serial.println();
   }
@@ -167,7 +179,7 @@ void loop() {
       case '2':
         if (MonLecteurPulse2 == NULL) {
           Serial.println("New LecteurPulse2");
-          MonLecteurPulse2 = new PulseReader(2,20,2);
+          MonLecteurPulse2 = new PulseReader(1, ticMed+1, ticMed-1);
           MonLecteurPulse2->begin();
         }  else {
           Serial.println("delete LecteurPulse2");
@@ -192,7 +204,10 @@ void loop() {
         }
         break;
 
-
+      case 'D':
+        Serial.println("Delay 5000");
+        delay(5000);
+        break;
     }
   }
 

@@ -53,9 +53,9 @@ void  Sprint(String string, long aValue) {
 
 
 
-//====== Variable globale
-volatile static AnalogReader* __AnalogReaderFirst   = NULL;            // First instance
-volatile static AnalogReader* __AnalogReaderCurrent = NULL;            // Current reading Instance
+//====== Variable globale volatile static ?
+AnalogReader* __AnalogReaderFirst   = NULL;            // First instance
+AnalogReader* __AnalogReaderCurrent = NULL;            // Current reading Instance
 static int __frequenceTimer { FREQUENCE_TIMER  };  // Freqence de base
 
 //====== interuption de gestion de l'AD lancéee a FrequenceTimer Hertz (50)
@@ -221,12 +221,18 @@ bool  AnalogReader::ready() {
   return (_valueChanged);
 }
 
-short AnalogReader::read() {
+uint16_t AnalogReader::read() {
   if (ready())  _valueChanged = false;
   return (_value);
 }
 
-short AnalogReader::getMissedRead() {
+uint16_t AnalogReader::getADValue() {
+  return (__ADValue);
+}
+
+
+
+uint16_t AnalogReader::getMissedRead() {
   short result = _missedRead;
   _missedRead = 0;
   return (result);
@@ -265,7 +271,8 @@ void AnalogReader::_putValue(int avalue) {
 /***********************************************************************
    Pulse Reader
 */
-void   PulseReader::begin(const int pin = -1, const int highlevel = -1, const int lowlevel = -1) {
+//begin(const int pin = -1, const int highlevel = -1, const int lowlevel = -1)
+void   PulseReader::begin(const int pin, const int highlevel, const int lowlevel ) {
   if (highlevel > 0)  _highLevel = highlevel;
   if (lowlevel  > 0)  _lowLevel = lowlevel;
   AnalogReader::begin(pin);
@@ -280,7 +287,7 @@ bool  PulseReader::ready() {
     // On regarde si une valeur a ete lue par l'AD
     noInterrupts();
     if (__ADNewValue) {
-      _value = __ADValue;
+      _value = __pulseLevel;
       _pulseLength = __pulseLength;
       _pulseInterval = __pulseInterval;
       __ADNewValue = false;
@@ -307,7 +314,7 @@ void   PulseReader::_putValue(const int avalue) {
 
 
   __pulseIntervalCompteur++;
-
+  __ADValue = avalue;
   //Attente du pulse
   if ( !__pulseStarted) {
     if (avalue >= _highLevel) {
@@ -335,8 +342,9 @@ void   PulseReader::_putValue(const int avalue) {
       // houla il y a un pulse non lut par le stetch !!
       __ADMissed++;
     }
-    __ADValue = __pulseMaxLevel;
-    __pulseLength = __pulseLengthCompteur;
+    // recopie pour une lecture par le sketch
+    __pulseLevel   = __pulseMaxLevel;
+    __pulseLength  = __pulseLengthCompteur;
     __pulseInterval = __pulseIntervalLatch;
     __ADNewValue = true;
   }

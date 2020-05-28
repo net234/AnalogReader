@@ -59,15 +59,16 @@ class AnalogReader {
     ~AnalogReader();
 
     // Methodes public
-    void   begin(const int pin = -1, const int lissage = -1);        // Activation de la lecture cyclique sur la ADC (0..7)
-    void   end();                 // Arret de la lecure cyclique
-    virtual bool   ready();               // Une lecture prete ?
-    short  read();                // Recuperation de la valeur lue
-    short  getMissedRead();       // Nombre de lecture non recupérée
-    bool   setFrequence(const long frequence = FREQUENCE_TIMER);        // Changement de la frequence de base (50HZ)
+    void     begin(const int pin = -1, const int lissage = -1);        // Activation de la lecture cyclique sur la ADC (0..7)
+    void     end();                 // Arret de la lecure cyclique
+    virtual  bool ready();          // Une nouvelle valeur ?  (Valeur differente de la precedente)
+    uint16_t read();                // Recuperation de la nouvelle valeur
+    uint16_t getMissedRead();       // Nombre de lecture non recupérée
+    uint16_t getADValue();          // Lecture de la derniere valeur AD lue
+    bool     setFrequence(const long frequence = FREQUENCE_TIMER);        // Changement de la frequence de base (50HZ)
     // Devrais etre privé mais utilisé par les interuptions
-    virtual void   _putValue(const int aValue);
-    byte   _pin {0};                  // AD Pin
+    virtual void _putValue(const int aValue);
+    byte   _pin {0};                 // AD Pin
     AnalogReader* _next{NULL};
     // Variables privée
   protected:
@@ -79,15 +80,11 @@ class AnalogReader {
     short  _value {0};               // Valeur lue sur le convertisseur
     short  _missedRead{0};           // nombre de valeur differents non lue depuis le dernier read()
     // valeur sous interuption  (volatil?)
-    volatile bool  __ADNewValue {
+    volatile uint16_t __ADNewValue {
       false
     };      // Presence d'une Nouvelle valeur
-    volatile uint8_t __ADValue {
-      0
-    };             // Valeur lue
-    volatile uint16_t __ADMissed {
-      0
-    };            // Nombre de valeurs non recuperée
+    volatile uint16_t __ADValue = 0;           // Valeur lue
+    volatile uint16_t __ADMissed = 0;          // Nombre de valeurs non recuperée
 };
 
 //PulseReader est un oblet specialisé pour detecter des pulses sur un port analogique
@@ -111,10 +108,9 @@ class PulseReader : public AnalogReader {
     virtual void   _putValue(const int aValue);
 
   protected:
-    //    byte _PulseLevel = 0;       // 0 .. 255
+   
     uint16_t _pulseLength = 0;       // duree en frequence timer unit
-    uint16_t _pulseInterval = 0;    // duree en frequence timer unit 65 sec max
-    //    byte _PulseDetectedChanged = false;
+    uint16_t _pulseInterval = 0;      // duree en frequence timer unit 65 sec max
     uint8_t _highLevel = 200;
     uint8_t _lowLevel = 50;
 

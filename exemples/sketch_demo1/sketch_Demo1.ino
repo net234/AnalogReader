@@ -33,8 +33,8 @@
 // Objets d'interface pour le convetisseur AD
 AnalogReader MonPotentionmetre = AnalogReader(0, 3);  //A0 avec un lissage sur 3 mesures
 AnalogReader MaCelulePhoto = AnalogReader(1);         //A1 sans lissage
-AnalogReader* MonCapteurPiezzo = NULL;                // il sera instancié en A3 dans loop
-
+PulseReader  MonCapteurPiezzo = PulseReader(2);       //A2 un piezzo mode pulse
+PulseReader* MaCeluleModePulse = NULL;                // il sera instancié en A1 : on peux instancier plusieur fois le meme port
 
 
 
@@ -43,10 +43,10 @@ void setup() {
   Serial.begin(115200);
   Serial.println(APP_NAME);
 
-// begin( n° du port , lissage)     
+  // begin( n° du port , lissage)
   MonPotentionmetre.begin();        // On demarre les mesures
-  MaCelulePhoto.begin(-1,5);        // On peut ajuster le lissage ici (-1 pour ne pas changer le port)
-
+  MaCelulePhoto.begin(-1, 5);       // On peut ajuster le lissage ici (-1 pour ne pas changer le port)
+  MonCapteurPiezzo.begin(-1, 3, 1);  // detect a 3 le depart pulse   a 1 la fin pulse
   Serial.println("Bonjour");
 }
 
@@ -110,12 +110,19 @@ void loop() {
     }
   }
 
-  // petit affichage de l'etat du maxi mini de la cellule toutes les 1Mega boucles
-  static long T1 = 0;
-  if (T1++ > 1000000) {
-    T1 = 0;
-    Serial.print("V1:");
-    Serial.print(V1);
+  // petit affichage de l'etat du maxi mini de la cellule toutes les 10 secondes
+  static long T1 = millis();
+  if (millis() - T1 > 10000) {
+    T1 += 10000;
+    int N = MonPotentionmetre.getADValue();
+    Serial.print(" Potentionmetre:");
+    Serial.print(N);
+    N = MaCelulePhoto.getADValue();
+    Serial.print(" CelulePhoto:");
+    Serial.print(N);
+    N = MonCapteurPiezzo.getADValue();
+    Serial.print(" CapteurPiezzo:");
+    Serial.print(N);
 
     Serial.print(" Low:");
     Serial.print(ticLow);
@@ -126,38 +133,68 @@ void loop() {
   }
 
 
-
-
-
-  // un capteur piezzo qui est instancié ou desinstancié a volonté
-  // seul les changements de valeurs sont retournée
+  // La cellule est vue par le detecteur de pulse
   //
-  if (MonCapteurPiezzo && MonCapteurPiezzo->ready()) {
-    int V2 = MonCapteurPiezzo->read();
-    int M2 = MonCapteurPiezzo->getMissedRead();
-    Serial.print("Piezzo V2:");
+  if (MaCeluleModePulse && MaCeluleModePulse->ready()) {
+
+    int M2 = MaCeluleModePulse->getMissedRead();
+    int L2 = MaCeluleModePulse->getLength();
+    int B2 = MaCeluleModePulse->getBPM();
+    int V2 = MaCeluleModePulse->read();// a lire en dernier
+
+    Serial.print("CeluleModePulse(1)=");
     Serial.print(V2);
-    Serial.print(" M2:");
-    Serial.println(M2);
+    Serial.print(" Len=");
+    Serial.print(L2);
+    Serial.print(" BPM=");
+    Serial.print(B2);
+    if (M2) {
+      Serial.print(" M2:");
+      Serial.print(M2);
+    }
+    Serial.println();
   }
 
 
-// ajout ou supression d'un capteur
-// la frequence du timer recalculer pour avoir une lecture a 50Hz de chaque capteur
+
+  // un capteur piezzo seul les changements de valeurs sont affiché
+  //
+  if (MonCapteurPiezzo.ready()) {
+    int M2 = MonCapteurPiezzo.getMissedRead();
+    int L2 = MonCapteurPiezzo.getLength();
+    int B2 = MonCapteurPiezzo.getBPM();
+    int V2 = MonCapteurPiezzo.read();   // a lire en dernier
+
+    Serial.print("CeluleModePulse(1)=");
+    Serial.print(V2);
+    Serial.print(" Len=");
+    Serial.print(L2);
+    Serial.print(" BPM=");
+    Serial.print(B2);
+    if (M2) {
+      Serial.print(" M2:");
+      Serial.print(M2);
+    }
+    Serial.println();
+  }
+
+
+  // ajout ou supression d'un capteur
+  // la frequence du timer est recalculé pour avoir une lecture a 50Hz de chaque capteur
 
 
   if (Serial.available())   {
     char inChar = (char)Serial.read();
     switch (inChar) {
       case 'P':
-        if (MonCapteurPiezzo == NULL) {
-          Serial.println("Creation d'un capteur piezzo");
-          MonCapteurPiezzo = new AnalogReader(2, 2);  // sur A2 lissage de 2
-          MonCapteurPiezzo->begin();
+        if (MaCeluleModePulse == NULL) {
+          Serial.println("Creation d'un capteur pulse sur A1 ");
+          MaCeluleModePulse = new PulseReader(1, ticMed + 1 , ticMed - 1); //
+          MaCeluleModePulse->begin();
         }  else {
-          Serial.println("delete  capteur piezzo");
-          delete  MonCapteurPiezzo;
-          MonCapteurPiezzo = NULL;
+          Serial.println("delete  capteur pulse A1");
+          delete  MaCeluleModePulse;
+          MaCeluleModePulse = NULL;
         }
         break;
 
